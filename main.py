@@ -5,6 +5,7 @@ Entry point for the 1D Airy wave simulation with pygame visualization.
 """
 
 import argparse
+import time
 
 import pygame
 from airy_waves.drawer import AiryWavesDrawer
@@ -43,12 +44,12 @@ def main():
         "--dt",
         type=float,
         default=0.1,
-        help="Time step for simulation (default: 0.1 seconds)",
+        help="Time step for simulation in seconds (default: 0.1)",
     )
     parser.add_argument(
         "--duration",
         type=float,
-        default=100.0,
+        default=10.0,
         help="Total simulation duration in seconds (default: 10.0; use 0 for"
         "infinite)",
     )
@@ -128,6 +129,9 @@ def main():
 
         # Increment simulation time.
         current_time += args.dt
+
+        # Wait to simulate real time.
+        time.sleep(args.dt)
 
         # Regulate the frame rate.
         drawer.tick(args.fps)

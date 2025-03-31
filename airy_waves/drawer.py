@@ -1,5 +1,5 @@
 """
-drawer.py
+airy_waves/drawer.py
 
 This module defines the AiryWavesDrawer class which uses pygame to display the
 1D Airy wave and a field of velocity vectors beneath the free surface.
@@ -89,24 +89,23 @@ class AiryWavesDrawer:
             )
 
         # Draw velocity field as arrows.
-        # The grid covers the simulation domain; arrows are drawn only where
-        # the point is under the free surface.
+        # Use a nonlinear mapping for vertical grid to concentrate arrows near
+        # the free surface.
         for i in range(self.grid_x):
             for j in range(self.grid_y):
-                # Compute the simulation coordinates of the grid point.
+                # Horizontal coordinate is still uniformly spaced.
                 x = self.x_min + i * (self.x_max - self.x_min) / (
                     self.grid_x - 1
                 )
-                y = self.y_bottom + j * (self.y_top - self.y_bottom) / (
-                    self.grid_y - 1
-                )
+                # Compute a normalized parameter p in [0,1] and use p^2 to
+                # concentrate near the top.
+                p = j / (self.grid_y - 1)
+                y = self.y_top - (self.y_top - self.y_bottom) * (p**2)
                 free_surface = self.wave.get_water_height(x)
                 if y <= free_surface:
                     u, v = self.wave.get_water_velocity(x, y)
                     start_pos = self.sim_to_screen(x, y)
-                    # Convert the velocity vector into a pixel offset.
-                    # Note: For y, we invert the sign because screen y
-                    # increases downward.
+                    # Draw the arrow with the specified scale.
                     dx_screen = int(u * self.arrow_scale * self.scale_x)
                     dy_screen = -int(v * self.arrow_scale * self.scale_y)
                     end_pos = (
