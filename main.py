@@ -1,21 +1,20 @@
 """
 main.py
 
-This is the entry point for the 1D Airy wave simulation.
-It parses command-line arguments to set the simulation parameters,
-creates an instance of the AiryWaves simulation, and then runs a
-simulation loop printing the wave state.
+Entry point for the 1D Airy wave simulation with pygame visualization.
 """
 
 import argparse
 
-from airy_waves.sim import AiryWaves  # Ensure your simulation class is defined
-
-# in airy_waves/sim.py
+import pygame
+from airy_waves.drawer import AiryWavesDrawer
+from airy_waves.sim import AiryWaves
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Simulate a 1D Airy wave.")
+    parser = argparse.ArgumentParser(
+        description="Simulate and display a 1D Airy wave using pygame."
+    )
     parser.add_argument(
         "--amplitude",
         type=float,
@@ -41,32 +40,56 @@ def main():
         help="Gravitational acceleration (default: 9.81)",
     )
     parser.add_argument(
-        "--duration",
-        type=float,
-        default=10.0,
-        help="Total simulation duration in seconds (default:" "10.0)",
-    )
-    parser.add_argument(
         "--dt",
         type=float,
         default=0.1,
-        help="Time step for simulation (default: 0.1)",
+        help="Time step for simulation (default: 0.1 seconds)",
     )
     parser.add_argument(
-        "--x",
+        "--duration",
         type=float,
-        default=5.0,
-        help="x position to sample water height and velocity" "(default: 5.0)",
+        default=100.0,
+        help="Total simulation duration in seconds (default: 10.0; use 0 for"
+        "infinite)",
     )
     parser.add_argument(
-        "--y",
+        "--width",
+        type=int,
+        default=800,
+        help="Window width in pixels (default: 800)",
+    )
+    parser.add_argument(
+        "--height",
+        type=int,
+        default=600,
+        help="Window height in pixels (default: 600)",
+    )
+    parser.add_argument(
+        "--arrow_scale",
         type=float,
-        default=0.0,
-        help="y position to sample water velocity (default:" "0.0)",
+        default=0.5,
+        help="Scaling factor for velocity arrows (default: 0.5)",
+    )
+    parser.add_argument(
+        "--grid_x",
+        type=int,
+        default=20,
+        help="Number of grid points in x direction for velocity field"
+        "(default: 20)",
+    )
+    parser.add_argument(
+        "--grid_y",
+        type=int,
+        default=10,
+        help="Number of grid points in y direction for velocity field"
+        "(default: 10)",
+    )
+    parser.add_argument(
+        "--fps", type=int, default=60, help="Frames per second (default: 60)"
     )
     args = parser.parse_args()
 
-    # Create the AiryWaves simulation instance with the provided parameters
+    # Create the simulation instance.
     wave = AiryWaves(
         amplitude=args.amplitude,
         wavelength=args.wavelength,
@@ -74,14 +97,42 @@ def main():
         gravity=args.gravity,
     )
 
-    current_time = 0.0
+    # Create the drawer instance.
+    drawer = AiryWavesDrawer(
+        wave,
+        width=args.width,
+        height=args.height,
+        arrow_scale=args.arrow_scale,
+        grid_x=args.grid_x,
+        grid_y=args.grid_y,
+    )
 
-    while current_time <= args.duration:
+    current_time = 0.0
+    running = True
+
+    while running:
+        # Process pygame events.
+        running = drawer.handle_events()
+
+        # If a positive duration is set and the simulation time is exceeded,
+        # exit.
+        if args.duration > 0 and current_time > args.duration:
+            running = False
+            continue
+
+        # Update the simulation state.
         wave.update(current_time)
-        water_height = wave.get_water_height(args.x)
-        water_velocity = wave.get_water_velocity(args.x, args.y)
+
+        # Draw the current state.
+        drawer.draw()
+
+        # Increment simulation time.
         current_time += args.dt
-    print("Simulation done !")
+
+        # Regulate the frame rate.
+        drawer.tick(args.fps)
+
+    pygame.quit()
 
 
 if __name__ == "__main__":
