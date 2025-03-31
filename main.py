@@ -9,6 +9,7 @@ import time
 
 import pygame
 from airy_waves.drawer import AiryWavesDrawer
+from airy_waves.init_helper import AiryWavesParams
 from airy_waves.sim import AiryWaves
 
 
@@ -90,13 +91,16 @@ def main():
     )
     args = parser.parse_args()
 
-    # Create the simulation instance.
-    wave = AiryWaves(
+    # Create the simulation parameters instance using init_helper.
+    params = AiryWavesParams(
         amplitude=args.amplitude,
         wavelength=args.wavelength,
         water_depth=args.water_depth,
         gravity=args.gravity,
     )
+
+    # Create the simulation instance.
+    wave = AiryWaves(params)
 
     # Create the drawer instance.
     drawer = AiryWavesDrawer(
