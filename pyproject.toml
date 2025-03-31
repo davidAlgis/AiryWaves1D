@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools>=42", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "airy_waves_simulation"
+version = "0.1.0"
+description = "A simulation of a 1D Airy wave using linear wave theory."
+readme = "README.md"
+requires-python = ">=3.7"
+license = { text = "MIT" }
+authors = [
+    { name = "David Algis", email = "david.algis@tutamail.com" }
+]
+dependencies = [
+    "numpy>=1.19",
+]
+
+[project.scripts]
+airy_waves = "main:main"
