@@ -17,7 +17,7 @@ class AiryWaves:
                 Parameters:
                     params: An instance of AiryWavesParams containing the
                 simulation parameters.
-        
+
         """
         self.a = params.amplitude
         self.wavelength = params.wavelength
@@ -55,29 +55,39 @@ class AiryWaves:
 
     def get_water_velocity(self, x: float, y: float):
         """
-        Computes the water velocity (u, v) at a given point (x, y).
+        Computes the water velocity (u,v) at a given point (x,y).
+        For points above the free surface, returns (0,0).
 
-        For points above the free surface, returns (0, 0).
-
-        Parameters:
-            x: Horizontal coordinate.
-            y: Vertical coordinate.
-
-        Returns:
-            A tuple (u, v) representing the water velocity components.
+        Uses deep-water approximations when k*h is very large.
         """
         eta = self.get_water_height(x)
         if y > eta:
             return (0.0, 0.0)
 
-        u = (
-            (self.a * self.g * self.k / self.omega)
-            * (np.cosh(self.k * (y + self.h)) / np.cosh(self.k * self.h))
-            * np.cos(self.k * x - self.omega * self.t)
-        )
-        v = (
-            (self.a * self.g * self.k / self.omega)
-            * (np.sinh(self.k * (y + self.h)) / np.cosh(self.k * self.h))
-            * np.sin(self.k * x - self.omega * self.t)
-        )
+        # Use deep water approximation if water is very deep:
+        deep_water_threshold = 50  # Adjust threshold as needed
+        if self.k * self.h > deep_water_threshold:
+            # In deep water: cosh(k*(y+h))/cosh(k*h) ~ exp(k*y)
+            factor = np.exp(self.k * y)
+            u = (
+                (self.a * self.g * self.k / self.omega)
+                * factor
+                * np.cos(self.k * x - self.omega * self.t)
+            )
+            v = (
+                (self.a * self.g * self.k / self.omega)
+                * factor
+                * np.sin(self.k * x - self.omega * self.t)
+            )
+        else:
+            u = (
+                (self.a * self.g * self.k / self.omega)
+                * (np.cosh(self.k * (y + self.h)) / np.cosh(self.k * self.h))
+                * np.cos(self.k * x - self.omega * self.t)
+            )
+            v = (
+                (self.a * self.g * self.k / self.omega)
+                * (np.sinh(self.k * (y + self.h)) / np.cosh(self.k * self.h))
+                * np.sin(self.k * x - self.omega * self.t)
+            )
         return (u, v)
