@@ -91,3 +91,25 @@ class AiryWaves:
                 * np.sin(self.k * x - self.omega * self.t)
             )
         return (u, v)
+
+    def get_water_force(self, x: float, y: float, mass: float, dt: float):
+        """
+        Estimates the force exerted by the water on a mass at the given point
+over time dt.
+        The force is computed as:
+            F = mass * (water_velocity / dt)
+
+        Parameters:
+          x: Horizontal coordinate.
+          y: Vertical coordinate.
+          mass: The mass of the particle.
+          dt: The time step over which the acceleration is applied.
+
+        Returns:
+          A tuple (F_x, F_y) representing the force components.
+        
+        """
+        u, v = self.get_water_velocity(x, y)
+        F_x = mass * u / dt
+        F_y = mass * v / dt
+        return (F_x, F_y)
