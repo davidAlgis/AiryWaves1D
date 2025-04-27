@@ -64,52 +64,62 @@ class AiryWaves:
         if y > eta:
             return (0.0, 0.0)
 
-        # Use deep water approximation if water is very deep:
-        deep_water_threshold = 50  # Adjust threshold as needed
-        if self.k * self.h > deep_water_threshold:
-            # In deep water: cosh(k*(y+h))/cosh(k*h) ~ exp(k*y)
-            factor = np.exp(self.k * y)
-            u = (
-                (self.a * self.g * self.k / self.omega)
-                * factor
-                * np.cos(self.k * x - self.omega * self.t)
-            )
-            v = (
-                (self.a * self.g * self.k / self.omega)
-                * factor
-                * np.sin(self.k * x - self.omega * self.t)
-            )
-        else:
-            u = (
-                (self.a * self.g * self.k / self.omega)
-                * (np.cosh(self.k * (y + self.h)) / np.cosh(self.k * self.h))
-                * np.cos(self.k * x - self.omega * self.t)
-            )
-            v = (
-                (self.a * self.g * self.k / self.omega)
-                * (np.sinh(self.k * (y + self.h)) / np.cosh(self.k * self.h))
-                * np.sin(self.k * x - self.omega * self.t)
-            )
+        factor = np.exp(self.k * y)
+        u = (
+            (self.a * self.g * self.k / self.omega)
+            * factor
+            * np.cos(self.k * x - self.omega * self.t)
+        )
+        v = (
+            (self.a * self.g * self.k / self.omega)
+            * factor
+            * np.sin(self.k * x - self.omega * self.t)
+        )
+        return (u, v)
+
+    def get_water_velocity_t(self, x: float, y: float, t: float):
+        """
+        Computes the water velocity (u,v) at a given point (x,y).
+        For points above the free surface, returns (0,0).
+
+        Uses deep-water approximations when k*h is very large.
+        """
+        eta = self.get_water_height(x)
+        if y > eta:
+            return (0.0, 0.0)
+
+        factor = np.exp(self.k * y)
+        u = (
+            (self.a * self.g * self.k / self.omega)
+            * factor
+            * np.cos(self.k * x - self.omega * t)
+        )
+        v = (
+            (self.a * self.g * self.k / self.omega)
+            * factor
+            * np.sin(self.k * x - self.omega * t)
+        )
         return (u, v)
 
     def get_water_force(self, x: float, y: float, mass: float, dt: float):
         """
-        Estimates the force exerted by the water on a mass at the given point
-over time dt.
-        The force is computed as:
-            F = mass * (water_velocity / dt)
+                Estimates the force exerted by the water on a mass at the given point
+        over time dt.
+                The force is computed as:
+                    F = mass * (water_velocity / dt)
 
-        Parameters:
-          x: Horizontal coordinate.
-          y: Vertical coordinate.
-          mass: The mass of the particle.
-          dt: The time step over which the acceleration is applied.
+                Parameters:
+                  x: Horizontal coordinate.
+                  y: Vertical coordinate.
+                  mass: The mass of the particle.
+                  dt: The time step over which the acceleration is applied.
 
-        Returns:
-          A tuple (F_x, F_y) representing the force components.
-        
+                Returns:
+                  A tuple (F_x, F_y) representing the force components.
+
         """
-        u, v = self.get_water_velocity(x, y)
-        F_x = mass * u / dt
-        F_y = mass * v / dt
+        u_new, v_new = self.get_water_velocity_t(x, y, self.t + dt)
+        u_old, v_old = self.get_water_velocity_t(x, y, self.t)
+        F_x = mass * (u_new - u_old) / dt
+        F_y = mass * (v_new - v_old) / dt
         return (F_x, F_y)
